@@ -1,29 +1,4 @@
 {
-  "_from": "@nobrainr/typescript_universal-webpack-karma_jasmine@^1.0.0",
-  "_id": "@nobrainr/typescript_universal-webpack-karma_jasmine@1.0.0",
-  "_inBundle": false,
-  "_integrity": "sha512-yt9IFFFsnYn0KwZxqKehMPyN/RpyF8tP8U7uJqj0yFrqox5Pxedv9h+aTWNzIGVGNbaihC6STzQokEzQQeNIfQ==",
-  "_location": "/@nobrainr/typescript_universal-webpack-karma_jasmine",
-  "_phantomChildren": {},
-  "_requested": {
-    "type": "range",
-    "registry": true,
-    "raw": "@nobrainr/typescript_universal-webpack-karma_jasmine@^1.0.0",
-    "name": "@nobrainr/typescript_universal-webpack-karma_jasmine",
-    "escapedName": "@nobrainr%2ftypescript_universal-webpack-karma_jasmine",
-    "scope": "@nobrainr",
-    "rawSpec": "^1.0.0",
-    "saveSpec": null,
-    "fetchSpec": "^1.0.0"
-  },
-  "_requiredBy": [
-    "#DEV:/",
-    "#USER"
-  ],
-  "_resolved": "https://registry.npmjs.org/@nobrainr/typescript_universal-webpack-karma_jasmine/-/typescript_universal-webpack-karma_jasmine-1.0.0.tgz",
-  "_shasum": "1c7e50d285c3427fd7ddb716147fc558b3d55754",
-  "_spec": "@nobrainr/typescript_universal-webpack-karma_jasmine@^1.0.0",
-  "_where": "/Users/kuba/.npm/_npx/67676/lib/node_modules/create-ts-lib",
   "author": "",
   "bundleDependencies": false,
   "deprecated": false,
@@ -74,5 +49,11 @@
     "start": "npm run server:dev",
     "test": "karma start"
   },
-  "version": "0.0.1"
+  "version": "0.0.1",
+  "dependencies": {
+    "@types/lodash": "^4.14.156",
+    "lazy-get-decorator": "^2.2.0",
+    "lodash": "^4.17.15",
+    "sodiumjs": "^3.0.7"
+  }
 }

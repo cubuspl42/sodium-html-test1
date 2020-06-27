@@ -25,7 +25,7 @@ const plugins = [
 ];
 
 var config = {
-  devtool: isProd ? 'hidden-source-map' : 'source-map',
+  devtool: 'inline-source-map',
   context: path.resolve('./src'),
   entry: {
     app: './index.ts'
