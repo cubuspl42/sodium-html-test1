@@ -1,5 +1,6 @@
-import {Cell, Operational, Stream} from "sodiumjs";
+import {Cell, CellLoop, Operational, Stream, StreamLoop} from "sodiumjs";
 import {MapUtils} from "../utils";
+import {LazyGetter} from "lazy-get-decorator";
 
 export class FrpArrayChange<A> {
     readonly updates?: ReadonlyMap<number, A>;
@@ -61,8 +62,11 @@ export class FrpArrayChange<A> {
 
             copy.splice(i, deletedCount, ...insertedElements);
 
-            i += 1 + insertedElements.length - deletedCount
+            i += 1 + insertedElements.length - deletedCount;
         }
+
+        const pushedElements = this.inserts?.get(a.length) ?? [];
+        copy.push(...pushedElements);
 
         return copy;
     }
@@ -87,18 +91,30 @@ export class FrpArray<A> {
     readonly sChange: Stream<FrpArrayChange<A>>;
 
     constructor(
-        initial: ReadonlyArray<A>,
+        initial: Cell<ReadonlyArray<A>>,
         sChange?: Stream<FrpArrayChange<A>>,
     ) {
         this.sChange = sChange ?? new Stream<FrpArrayChange<A>>();
-        this.cell = this.sChange.accum(
-            initial,
+        this.cell = this.sChange.accumLazy(
+            initial.sampleLazy(),
             (c, a) => c.apply(a),
         );
+
+        this.cell.listen(() => {
+        });
+        this.cLength.listen(() => {
+        });
+    }
+
+    static hold<A>(
+        initial: ReadonlyArray<A>,
+        sChange?: Stream<FrpArrayChange<A>>,
+    ): FrpArray<A> {
+        return new FrpArray<A>(new Cell(initial), sChange);
     }
 
     static fromCellArray<A>(cellArray: ReadonlyArray<Cell<A>>) {
-        return new FrpArray(
+        return FrpArray.hold(
             cellArray.map((c) => c.sample()),
             Operational.value(Cell.liftArray(cellArray as Array<Cell<A>>)).map((array) => {
                 const entries = array.map((value, index): [number, A] => [index, value]);
@@ -108,12 +124,31 @@ export class FrpArray<A> {
         )
     }
 
+    static accum<A, B>(
+        stream: Stream<A>,
+        initialArray: ReadonlyArray<B>,
+        f: (a: A, frpArray: FrpArray<B>) => FrpArrayChange<B>,
+    ) {
+        const frpArrayLoop = new FrpArrayLoop<B>();
+        const frpArray = FrpArray.hold(
+            initialArray,
+            stream.map((a) => f(a, frpArrayLoop)),
+        );
+        frpArrayLoop.loop(frpArray);
+        return frpArray;
+    }
+
+    @LazyGetter()
+    get cLength(): Cell<number> {
+        return this.cell.map((arr) => arr.length);
+    }
+
     sample(): ReadonlyArray<A> {
         return this.cell.sample();
     }
 
     map<B>(f: (a: A) => B): FrpArray<B> {
-        return new FrpArray<B>(
+        return FrpArray.hold(
             this.sample().map(f),
             this.sChange.map((c) => c.map(f)),
         )
@@ -150,5 +185,38 @@ export class FrpArray<A> {
 
     static filterNotNull<A>(frpArray: FrpArray<A | null>): FrpArray<A> {
         return frpArray.filter((a) => a !== null).map((a) => a as A);
+    }
+
+    pushChange(elements: ReadonlyArray<A>): FrpArrayChange<A> {
+        const length = this.cLength.sample();
+        return new FrpArrayChange<A>({
+            inserts: new Map([
+                [length, elements],
+            ]),
+        });
+    }
+}
+
+export class FrpArrayLoop<A> extends FrpArray<A> {
+    private readonly initialLoop: CellLoop<ReadonlyArray<A>>;
+
+    private readonly sChangeLoop: StreamLoop<FrpArrayChange<A>>;
+
+    constructor() {
+        const initial = new CellLoop<ReadonlyArray<A>>();
+        const sChange = new StreamLoop<FrpArrayChange<A>>();
+
+        super(
+            initial,
+            sChange,
+        );
+
+        this.initialLoop = initial;
+        this.sChangeLoop = sChange;
+    }
+
+    loop(frpArray: FrpArray<A>) {
+        this.initialLoop.loop(new Cell(frpArray.sample()))
+        this.sChangeLoop.loop(frpArray.sChange);
     }
 }

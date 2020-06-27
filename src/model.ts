@@ -13,15 +13,16 @@ export class Todo {
 export class TodoList {
     readonly sAdd = new StreamLoop<string>();
 
-    readonly aTodos = new FrpArray([
-        new Todo("Buy milk"),
-        new Todo("Buy carrots"),
-    ], this.sAdd.map((name) => new FrpArrayChange({
-        inserts: new Map([[
-            0,
-            [new Todo(`Buy ${name}`)],
-        ]]),
-    })));
+    readonly aTodos = FrpArray.accum(
+        this.sAdd,
+        [
+            new Todo("Buy milk"),
+            new Todo("Buy carrots"),
+        ],
+        (name, todos) => todos.pushChange([
+            new Todo(`Buy ${name}`),
+        ]),
+    );
 
     constructor(
         readonly name: String,

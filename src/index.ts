@@ -22,6 +22,13 @@ function todoListView(todoList: TodoList): FrpElement {
     return div({
         children: [
             div({children: [`Todo list: ${todoList.name}`]}),
+            div({
+                children: [
+                    todoList.aTodos.cLength.map<FrpElement | null>(
+                        (l) => `Number of todos: ${l}`,
+                    ),
+                ]
+            }),
             nameInput,
             buttonAdd,
             div({children: todoList.aTodos.map(todoView)}),
@@ -32,7 +39,7 @@ function todoListView(todoList: TodoList): FrpElement {
 function root(): FrpHTMLElement {
     const todoApp = new TodoApp();
     return div({
-        children: new FrpArray<FrpElement>([
+        children: FrpArray.hold<FrpElement>([
             div({children: ["Todo app"]}),
             div({
                 children: [
