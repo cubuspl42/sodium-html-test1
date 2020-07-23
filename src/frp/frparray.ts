@@ -48,11 +48,11 @@ export class FrpArrayChange<A> {
         const copy = a.slice();
 
         this.updates?.forEach((element, index) => {
-            copy[ index ] = element;
+            copy[index] = element;
         });
 
         this.swaps?.forEach((targetIndex, sourceIndex) => {
-            copy[ targetIndex ] = copy[ sourceIndex ];
+            copy[targetIndex] = copy[sourceIndex];
         });
 
         // for (let i = 0; i < copy.length;) {
@@ -169,7 +169,7 @@ export class FrpArray<A> {
 
     flatMapS<B>(f: (a: A) => Stream<B>): Stream<Map<number, B>> {
         return Cell.switchS(this._cell.map(
-            (a) => traverseArrayS(a.map(f)),
+            (a) => mergeEvents(a.map(f)),
         ));
     }
 
@@ -216,18 +216,18 @@ export class FrpArray<A> {
     }
 }
 
-function traverseArrayS<A>(ca: ReadonlyArray<Stream<A>>): Stream<Map<number, A>> {
-    return _traverseArrayS(ca, 0, ca.length);
+function mergeEvents<A>(ca: ReadonlyArray<Stream<A>>): Stream<Map<number, A>> {
+    return _mergeEvents(ca, 0, ca.length);
 }
 
-function _traverseArrayS<A>(sa: ReadonlyArray<Stream<A>>, fromInc: number, toExc: number): Stream<Map<number, A>> {
+function _mergeEvents<A>(sa: ReadonlyArray<Stream<A>>, fromInc: number, toExc: number): Stream<Map<number, A>> {
     if (toExc - fromInc === 0) {
         return new Stream<Map<number, A>>();
-    } else if (toExc - fromInc == 1) {
-        return sa[ fromInc ].map(a => new Map([[fromInc, a]]));
+    } else if (toExc - fromInc === 1) {
+        return sa[fromInc].map(a => new Map([[fromInc, a]]));
     } else {
         const pivot = Math.floor((fromInc + toExc) / 2);
-        return _traverseArrayS(sa, fromInc, pivot).merge(_traverseArrayS(sa, pivot, toExc),
+        return _mergeEvents(sa, fromInc, pivot).merge(_mergeEvents(sa, pivot, toExc),
             (map1, map2) => MapUtils.union(map1, map2)
         );
     }
