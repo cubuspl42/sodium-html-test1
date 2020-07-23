@@ -3,6 +3,10 @@ export class MapUtils {
         return new Map(Array.from(m).map(([k, v]): [K, V2] => [k, f(v)]));
     }
 
+    static filterValues<K, V>(m: ReadonlyMap<K, V>, f: (v: V) => boolean): ReadonlyMap<K, V> {
+        return new Map(Array.from(m).filter(([k, v]): boolean => f(v)));
+    }
+
     static fromArray<A>(array: ReadonlyArray<A>): Map<number, A> {
         return new Map(array.map((value, index) => [index, value]));
     }

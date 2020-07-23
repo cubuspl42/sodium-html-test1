@@ -1,8 +1,8 @@
-import {FrpElement, FrpHTMLElement} from "./frpdom";
-import {FrpArray} from "../frp/frparray";
-import {LazyGetter} from "lazy-get-decorator";
-import {buildNode, swapElements} from "./utils";
-import {Cell} from "sodiumjs";
+import { FrpElement, FrpHTMLElement } from "./frpdom";
+import { FrpArray } from "../frp/frparray";
+import { LazyGetter } from "lazy-get-decorator";
+import { buildNode, swapElements } from "./utils";
+import { Cell } from "sodiumjs";
 
 function toFrpArray(cellArray: ReadonlyArray<Cell<FrpElement | null> | FrpElement>): FrpArray<FrpElement> {
     const cellOnlyArray: ReadonlyArray<Cell<FrpElement | null>> =
@@ -11,7 +11,8 @@ function toFrpArray(cellArray: ReadonlyArray<Cell<FrpElement | null> | FrpElemen
                 child :
                 new Cell<FrpElement | null>(child),
         );
-    return FrpArray.filterNotNull(FrpArray.fromCellArray(cellOnlyArray));
+    // return FrpArray.filterNotNull(FrpArray.fromCellArray(cellOnlyArray));
+    return FrpArray.meltStatic(cellOnlyArray).map((e) => e!);
 }
 
 function toCell<A>(a: Cell<A> | A) {

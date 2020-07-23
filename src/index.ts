@@ -42,9 +42,19 @@ function todoListView(todoList: TodoList): FrpElement {
             div({ children: [`Todo list: ${todoList.name}`] }),
             div({
                 children: [
-                    todoList.aTodos.cLength.map<FrpElement | null>(
-                        (l) => `Number of todos: ${l}`,
-                    ),
+                    div({
+                        children: [
+                            todoList.aTodos.cLength.map<FrpElement | null>(
+                                (l) => `Number of todos: ${l}`,
+                            ),
+                        ]
+                    }),
+                    div({
+                        children: [
+                            todoList.cDoneTodosCount.map<FrpElement | null>(
+                                (n) => `Number of done todos: ${n}`,
+                            ),]
+                    }),
                 ]
             }),
             nameInput,

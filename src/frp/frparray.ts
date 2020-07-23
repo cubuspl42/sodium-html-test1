@@ -88,6 +88,20 @@ export class FrpArrayChange<A> {
         });
     }
 
+    filter(f: (a: A) => boolean): FrpArrayChange<A> {
+        throw new Error("Unimplemented");
+        // return new FrpArrayChange<A>({
+        //     updates: this.updates !== undefined ?
+        //         MapUtils.filterValues(this.updates, f) :
+        //         undefined,
+        //     swaps: this.swaps,
+        //     inserts: this.inserts !== undefined ?
+        //         MapUtils.mapValues(this.inserts, (arr) => arr.map(f)) :
+        //         undefined,
+        //     deletes: this.deletes,
+        // });
+    }
+
     union(other: FrpArrayChange<A>) {
         return new FrpArrayChange({
             updates: MapUtils.union(this.updates ?? new Map(), other.updates ?? new Map()),
@@ -126,15 +140,31 @@ export class FrpArray<A> {
         return new FrpArray<A>(new Cell(initial), sChange);
     }
 
-    static fromCellArray<A>(cellArray: ReadonlyArray<Cell<A>>) {
+    static melt<A>(cells: FrpArray<Cell<A>>): FrpArray<A> {
+        throw new Error("Unimplemented");
+        // return FrpArray.hold(
+        //     cells.sample().map((c) => c.sample()),
+        //     cells.mergeMap((c) => Operational.value(c)).map((m) => new)
+        // )
+    }
+
+    static meltStatic<A>(cells: ReadonlyArray<Cell<A>>): FrpArray<A> {
         return FrpArray.hold(
-            cellArray.map((c) => c.sample()),
-            Operational.value(Cell.liftArray(cellArray as Array<Cell<A>>)).map((array) => {
+            cells.map((c) => c.sample()),
+            Operational.value(Cell.liftArray(cells as Array<Cell<A>>)).map((array) => {
                 const entries = array.map((value, index): [number, A] => [index, value]);
                 // TODO: Filter changed values
                 return new FrpArrayChange<A>({ updates: new Map(entries) });
             })
         )
+    }
+
+    static merge<A>(cells: FrpArray<Stream<A>>): Stream<Map<number, A>> {
+        throw new Error("Unimplemented");
+    }
+
+    static mergeStatic<A>(cells: ReadonlyArray<Stream<A>>): Stream<Map<number, A>> {
+        throw new Error("Unimplemented");
     }
 
     static accum<A, B>(
@@ -167,14 +197,18 @@ export class FrpArray<A> {
         )
     }
 
-    flatMapS<B>(f: (a: A) => Stream<B>): Stream<Map<number, B>> {
+    mergeMap<B>(f: (a: A) => Stream<B>): Stream<Map<number, B>> {
         return Cell.switchS(this._cell.map(
-            (a) => mergeEvents(a.map(f)),
+            (a) => mergeArray(a.map(f)),
         ));
     }
 
+    meltMap<B>(f: (a: A) => Cell<B>): FrpArray<B> {
+        return FrpArray.melt(this.map(f));
+    }
+
     filter(f: (a: A) => boolean): FrpArray<A> {
-        return this; // FIXME
+        throw new Error("Unimplemented");
 
         // const initialArray = this.sample();
         //
@@ -188,11 +222,12 @@ export class FrpArray<A> {
         // const xx = this.sChange.accum(initialFilteredOut, (change, acc) => {
         //     const newAcc = new Set(acc);
         //
+        //
         // });
         //
-        // const filteredOut = this.sChange.map((change) => {
-        //     change.
-        // });
+        // // const filteredOut = this.sChange.map((change) => {
+        // //     change.
+        // // });
         //
         // return new FrpArray(
         //     initialArray.filter(f),
@@ -200,6 +235,12 @@ export class FrpArray<A> {
         //         throw null;
         //     }),
         // )
+    }
+
+    count(f: (a: A) => Cell<boolean>): Cell<number> {
+        return this._cell
+            .flatMap((arr) => Cell.liftArray(arr.map((a) => f(a))))
+            .map((bools) => bools.filter(b => b).length);
     }
 
     static filterNotNull<A>(frpArray: FrpArray<A | null>): FrpArray<A> {
@@ -216,18 +257,18 @@ export class FrpArray<A> {
     }
 }
 
-function mergeEvents<A>(ca: ReadonlyArray<Stream<A>>): Stream<Map<number, A>> {
-    return _mergeEvents(ca, 0, ca.length);
+function mergeArray<A>(ca: ReadonlyArray<Stream<A>>): Stream<Map<number, A>> {
+    return _mergeArray(ca, 0, ca.length);
 }
 
-function _mergeEvents<A>(sa: ReadonlyArray<Stream<A>>, fromInc: number, toExc: number): Stream<Map<number, A>> {
+function _mergeArray<A>(sa: ReadonlyArray<Stream<A>>, fromInc: number, toExc: number): Stream<Map<number, A>> {
     if (toExc - fromInc === 0) {
         return new Stream<Map<number, A>>();
     } else if (toExc - fromInc === 1) {
         return sa[fromInc].map(a => new Map([[fromInc, a]]));
     } else {
         const pivot = Math.floor((fromInc + toExc) / 2);
-        return _mergeEvents(sa, fromInc, pivot).merge(_mergeEvents(sa, pivot, toExc),
+        return _mergeArray(sa, fromInc, pivot).merge(_mergeArray(sa, pivot, toExc),
             (map1, map2) => MapUtils.union(map1, map2)
         );
     }

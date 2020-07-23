@@ -1,6 +1,6 @@
-import {LazyGetter} from 'lazy-get-decorator';
-import {Cell, CellLoop, Stream, StreamLoop, StreamSink, Unit} from "sodiumjs";
-import {FrpArray, FrpArrayChange, FrpArrayLoop} from "./frp/frparray";
+import { LazyGetter } from 'lazy-get-decorator';
+import { Cell, CellLoop, Stream, StreamLoop, StreamSink, Unit } from "sodiumjs";
+import { FrpArray, FrpArrayChange, FrpArrayLoop } from "./frp/frparray";
 
 export class Todo {
     constructor(
@@ -29,7 +29,7 @@ export class TodoList {
         const sAdd = new StreamLoop<string>();
 
         const sRemove: Stream<Map<number, Unit>> =
-            aTodosLoop.flatMapS((t) => t.sRemove);
+            aTodosLoop.mergeMap((t) => t.sRemove);
 
         const sAddChange = sAdd.map((name) => {
             return aTodos.pushChange([
@@ -57,6 +57,11 @@ export class TodoList {
 
         this.sAdd = sAdd;
         this.aTodos = aTodos;
+    }
+
+    @LazyGetter()
+    get cDoneTodosCount(): Cell<number> {
+        return this.aTodos.count((t) => t.cDone);
     }
 }
 
