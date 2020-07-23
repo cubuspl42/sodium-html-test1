@@ -6,4 +6,8 @@ export class MapUtils {
     static fromArray<A>(array: ReadonlyArray<A>): Map<number, A> {
         return new Map(array.map((value, index) => [index, value]));
     }
+
+    static union<K, V>(mapA: ReadonlyMap<K, V>, mapB: ReadonlyMap<K, V>) {
+        return new Map([...mapA, ...mapB]);
+    }
 }

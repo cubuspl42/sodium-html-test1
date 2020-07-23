@@ -1,8 +1,8 @@
-import {FrpElement, FrpHTMLElement} from "./frpdom";
-import {FrpArray} from "../frp/frparray";
-import {LazyGetter} from "lazy-get-decorator";
-import {Cell, Stream, StreamSink, Unit} from "sodiumjs";
-import {buildNode} from "./utils";
+import { FrpElement, FrpHTMLElement } from "./frpdom";
+import { FrpArray } from "../frp/frparray";
+import { LazyGetter } from "lazy-get-decorator";
+import { Cell, Stream, StreamSink, Unit } from "sodiumjs";
+import { buildNode } from "./utils";
 
 export class FrpHTMLButtonElement extends FrpHTMLElement {
     private readonly child: Cell<FrpElement>;

@@ -4,7 +4,7 @@ import {LazyGetter} from "lazy-get-decorator";
 import {buildNode, swapElements} from "./utils";
 import {Cell} from "sodiumjs";
 
-function wrapCellArray(cellArray: ReadonlyArray<Cell<FrpElement | null> | FrpElement>): FrpArray<FrpElement> {
+function toFrpArray(cellArray: ReadonlyArray<Cell<FrpElement | null> | FrpElement>): FrpArray<FrpElement> {
     const cellOnlyArray: ReadonlyArray<Cell<FrpElement | null>> =
         cellArray.map(
             (child) => child instanceof Cell ?
@@ -14,22 +14,37 @@ function wrapCellArray(cellArray: ReadonlyArray<Cell<FrpElement | null> | FrpEle
     return FrpArray.filterNotNull(FrpArray.fromCellArray(cellOnlyArray));
 }
 
+function toCell<A>(a: Cell<A> | A) {
+    return a instanceof Cell ? a : new Cell(a);
+}
+
 export class FrpHTMLDivElement extends FrpHTMLElement {
+    private readonly className: Cell<string> | undefined;
+
     private readonly children: FrpArray<FrpElement>;
 
     constructor(props: {
+        className?: Cell<string> | string,
         children: FrpArray<FrpElement> | ReadonlyArray<Cell<FrpElement | null> | FrpElement>,
     }) {
         super();
+
+        this.className = props.className !== undefined ? toCell(props.className) : undefined;
+
         const children = props.children;
         this.children = children instanceof FrpArray ?
             children :
-            wrapCellArray(children);
+            toFrpArray(children);
     }
 
     @LazyGetter()
     get htmlElement(): HTMLElement {
         const parentElement = document.createElement("div");
+
+        // TODO: Unlisten
+        this.className?.listen((cn) => {
+            parentElement.className = cn;
+        });
 
         this.children.sample().forEach((element) => {
             const childNode = buildNode(element);
@@ -74,6 +89,7 @@ export class FrpHTMLDivElement extends FrpHTMLElement {
 }
 
 export function div(props: {
+    className?: Cell<string> | string,
     children: FrpArray<FrpElement> | ReadonlyArray<Cell<FrpElement | null> | FrpElement>,
 }): FrpHTMLDivElement {
     return new FrpHTMLDivElement(props);
